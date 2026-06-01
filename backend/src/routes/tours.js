@@ -1,55 +1,71 @@
 const express = require('express');
+const Tour = require('../models/Tour');
+const auth = require('../middleware/auth');
 const router = express.Router();
-const authMiddleware = require('../middleware/auth');
 
-// Tour Controller
-const tourController = {
-  getAll: (req, res) => {
-    res.json({
-      success: true,
-      message: 'Get all tours',
-      data: []
-    });
-  },
-  getById: (req, res) => {
-    res.json({
-      success: true,
-      message: 'Get tour by ID',
-      data: { id: req.params.id }
-    });
-  },
-  create: (req, res) => {
-    res.json({
-      success: true,
-      message: 'Create tour',
-    });
-  },
-  update: (req, res) => {
-    res.json({
-      success: true,
-      message: 'Update tour',
-    });
-  },
-  delete: (req, res) => {
-    res.json({
-      success: true,
-      message: 'Delete tour',
-    });
-  },
-  search: (req, res) => {
-    res.json({
-      success: true,
-      message: 'Search tours',
-      filters: req.query,
-    });
-  },
-};
+// Get all tours
+router.get('/', async (req, res) => {
+  try {
+    const { destination, season, budget } = req.query;
+    let filter = { status: 'active' };
+    
+    if (destination) filter.destination = { $regex: destination, $options: 'i' };
+    if (season) filter.season = season;
+    if (budget) {
+      const [min, max] = budget.split('-').map(Number);
+      filter.price = { $gte: min, $lte: max };
+    }
+    
+    const tours = await Tour.find(filter).populate('accommodations');
+    res.json(tours);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
-router.get('/', tourController.getAll);
-router.get('/search', tourController.search);
-router.get('/:id', tourController.getById);
-router.post('/', authMiddleware, tourController.create);
-router.put('/:id', authMiddleware, tourController.update);
-router.delete('/:id', authMiddleware, tourController.delete);
+// Get tour by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const tour = await Tour.findById(req.params.id).populate('accommodations');
+    if (!tour) return res.status(404).json({ error: 'Tour not found' });
+    res.json(tour);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create tour (Admin only)
+router.post('/', auth, async (req, res) => {
+  try {
+    const tourData = { ...req.body, createdBy: req.userId };
+    const tour = new Tour(tourData);
+    await tour.save();
+    res.status(201).json(tour);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update tour
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!tour) return res.status(404).json({ error: 'Tour not found' });
+    res.json(tour);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete tour
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const tour = await Tour.findByIdAndDelete(req.params.id);
+    if (!tour) return res.status(404).json({ error: 'Tour not found' });
+    res.json({ message: 'Tour deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 module.exports = router;

@@ -4,91 +4,77 @@ const tourSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true, 'Please provide a tour title'],
+      required: [true, 'Please provide tour title'],
       trim: true,
     },
-    description: {
-      type: String,
-      required: true,
-    },
+    description: String,
     destination: {
       type: String,
-      required: true,
+      required: [true, 'Please provide destination'],
     },
-    price: {
-      type: Number,
-      required: [true, 'Please provide a price'],
+    startDate: {
+      type: Date,
+      required: [true, 'Please provide start date'],
     },
-    currency: {
-      type: String,
-      default: 'VND',
-      enum: ['VND', 'USD', 'EUR'],
+    endDate: {
+      type: Date,
+      required: [true, 'Please provide end date'],
     },
     duration: {
       type: Number,
       required: true, // in days
     },
-    startDate: {
-      type: Date,
-      required: true,
-    },
-    endDate: {
-      type: Date,
-      required: true,
+    price: {
+      type: Number,
+      required: [true, 'Please provide price'],
     },
     maxParticipants: {
       type: Number,
-      required: true,
+      required: [true, 'Please provide max participants'],
     },
     currentParticipants: {
       type: Number,
       default: 0,
     },
-    status: {
-      type: String,
-      enum: ['draft', 'published', 'cancelled', 'completed'],
-      default: 'draft',
-    },
-    images: [{
-      url: String,
-      caption: String,
-    }],
-    highlights: [String],
     itinerary: [{
       day: Number,
       title: String,
       description: String,
-      meals: String,
-      accommodation: String,
+      activities: [String],
+      location: String,
     }],
-    inclusions: [String],
-    exclusions: [String],
-    hotelIds: [{
+    accommodations: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Hotel',
     }],
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+    season: {
+      type: String,
+      enum: ['spring', 'summer', 'autumn', 'winter'],
     },
+    status: {
+      type: String,
+      enum: ['active', 'inactive', 'cancelled'],
+      default: 'active',
+    },
+    images: [String],
     rating: {
       type: Number,
       min: 0,
       max: 5,
       default: 0,
     },
-    reviews: [{
+    reviews: [
+      {
+        userId: mongoose.Schema.Types.ObjectId,
+        comment: String,
+        rating: Number,
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Review',
-    }],
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now,
+      ref: 'User',
+      required: true,
     },
   },
   { timestamps: true }

@@ -1,10 +1,7 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
-const path = require('path');
-
-// Load environment variables
-dotenv.config();
+require('express-async-errors');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -12,70 +9,66 @@ const tourRoutes = require('./routes/tours');
 const bookingRoutes = require('./routes/bookings');
 const hotelRoutes = require('./routes/hotels');
 const analyticsRoutes = require('./routes/analytics');
-const userRoutes = require('./routes/users');
+
+// Import database
+const { connectDB } = require('./database/connection');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
-const authMiddleware = require('./middleware/auth');
-
-// Import database
-const connectDB = require('./database/connection');
+const auth = require('./middleware/auth');
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 
 // Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true
 }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Static files
-app.use('/uploads', express.static('uploads'));
-
-// Connect to database
-connectDB();
-
-// Health check route
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
+// Health check
+app.get('/api/status', (req, res) => {
+  res.json({ 
+    status: 'Server is running',
+    timestamp: new Date(),
     environment: process.env.NODE_ENV
   });
 });
 
-// API Routes
-const apiPrefix = process.env.API_PREFIX || '/api';
-
-app.use(`${apiPrefix}/auth`, authRoutes);
-app.use(`${apiPrefix}/tours`, tourRoutes);
-app.use(`${apiPrefix}/bookings`, bookingRoutes);
-app.use(`${apiPrefix}/hotels`, hotelRoutes);
-app.use(`${apiPrefix}/analytics`, analyticsRoutes);
-app.use(`${apiPrefix}/users`, userRoutes);
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/tours', tourRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/hotels', hotelRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Route not found',
-    path: req.originalUrl
-  });
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
 });
 
-// Error handler middleware
+// Error handling middleware
 app.use(errorHandler);
 
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`\n${'='.repeat(50)}`);
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📍 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🔗 API Prefix: ${apiPrefix}`);
-  console.log(`${'='.repeat(50)}\n`);
-});
+// Connect to database and start server
+const startServer = async () => {
+  try {
+    await connectDB();
+    console.log('Database connected successfully');
+    
+    app.listen(PORT, () => {
+      console.log(`\n🚀 Server is running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV}`);
+      console.log(`API URL: http://localhost:${PORT}/api\n`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 module.exports = app;

@@ -2,29 +2,29 @@ const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema(
   {
-    bookingId: {
+    bookingCode: {
       type: String,
       unique: true,
+      required: true,
       default: () => 'BK-' + Date.now(),
     },
-    customerId: {
+    customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    agentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: null,
-    },
-    tourId: {
+    tour: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Tour',
       required: true,
     },
+    agent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
     numberOfParticipants: {
       type: Number,
-      required: true,
+      required: [true, 'Please provide number of participants'],
       min: 1,
     },
     totalPrice: {
@@ -36,53 +36,35 @@ const bookingSchema = new mongoose.Schema(
       enum: ['pending_approval', 'approved', 'rejected', 'cancelled', 'completed'],
       default: 'pending_approval',
     },
-    specialRequests: String,
-    contactInfo: {
-      name: String,
-      email: String,
-      phone: String,
-    },
-    hotelBookingIds: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'HotelBooking',
-    }],
     paymentStatus: {
       type: String,
-      enum: ['pending', 'partial', 'paid', 'refunded'],
-      default: 'pending',
+      enum: ['unpaid', 'partially_paid', 'paid'],
+      default: 'unpaid',
     },
-    paymentMethod: String,
-    notes: [{
-      content: String,
-      createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-      },
-      createdAt: {
-        type: Date,
-        default: Date.now,
-      },
-    }],
-    approvalHistory: [{
-      action: String, // 'approved', 'rejected', 'pending'
-      approvedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-      },
-      timestamp: {
-        type: Date,
-        default: Date.now,
-      },
-      reason: String,
-    }],
-    createdAt: {
-      type: Date,
-      default: Date.now,
+    amountPaid: {
+      type: Number,
+      default: 0,
     },
-    updatedAt: {
-      type: Date,
-      default: Date.now,
+    departureDate: Date,
+    returnDate: Date,
+    specialRequests: String,
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
     },
+    approvalDate: Date,
+    rejectionReason: String,
+    participants: [
+      {
+        firstName: String,
+        lastName: String,
+        email: String,
+        phone: String,
+        dateOfBirth: Date,
+        nationality: String,
+        passportNumber: String,
+      },
+    ],
   },
   { timestamps: true }
 );

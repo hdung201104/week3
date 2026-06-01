@@ -8,57 +8,49 @@ const hotelSchema = new mongoose.Schema(
       trim: true,
     },
     description: String,
-    city: {
-      type: String,
-      required: true,
-    },
-    address: {
-      street: String,
-      ward: String,
-      district: String,
+    location: {
+      address: String,
       city: String,
       country: String,
+      coordinates: {
+        latitude: Number,
+        longitude: Number,
+      },
     },
-    stars: {
-      type: Number,
-      min: 1,
-      max: 5,
-      default: 3,
-    },
-    phone: String,
-    email: String,
-    website: String,
-    checkInTime: String,
-    checkOutTime: String,
-    amenities: [String],
-    rooms: [{
-      roomType: String,
-      capacity: Number,
-      price: Number,
-      quantity: Number,
-      description: String,
-    }],
-    images: [{
-      url: String,
-      caption: String,
-    }],
     rating: {
       type: Number,
       min: 0,
       max: 5,
       default: 0,
     },
-    isActive: {
-      type: Boolean,
-      default: true,
+    rooms: [
+      {
+        roomType: {
+          type: String,
+          enum: ['single', 'double', 'twin', 'suite'],
+        },
+        totalRooms: Number,
+        availableRooms: Number,
+        pricePerNight: Number,
+        amenities: [String],
+      },
+    ],
+    amenities: [String],
+    images: [String],
+    contactInfo: {
+      email: String,
+      phone: String,
+      website: String,
     },
-    createdAt: {
-      type: Date,
-      default: Date.now,
+    policies: {
+      checkInTime: String,
+      checkOutTime: String,
+      cancellationPolicy: String,
     },
-    updatedAt: {
-      type: Date,
-      default: Date.now,
+    status: {
+      type: String,
+      enum: ['active', 'inactive', 'maintenance'],
+      default: 'active',
     },
   },
   { timestamps: true }
